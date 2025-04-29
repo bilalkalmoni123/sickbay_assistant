@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sickbay Assistant</title>
+
+  <!-- Favicon (Simple Health Logo) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24'><path fill='%2328a745' d='M12 0C5.372 0 0 5.372 0 12c0 6.625 5.372 12 12 12s12-5.375 12-12c0-6.628-5.372-12-12-12zm0 22c-5.523 0-10-4.477-10-10S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z'/><path fill='%2328a745' d='M17 11h-4V7h-2v4H7v2h4v4h2v-4h4z'/></svg>" />
+
+  <meta name="theme-color" content="#28a745" />
+  <meta name="description" content="Sickbay Assistant - Your trusted school health partner!" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Sickbay Assistant" />
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+      margin: 0;
+      padding: 0;
+      animation: backgroundMove 20s infinite alternate;
+    }
+    @keyframes backgroundMove {
+      0% { background-position: left; }
+      100% { background-position: right; }
+    }
+    nav {
+      background: #28a745;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+    nav .logo {
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+    nav .nav-links a {
+      margin-left: 20px;
+      color: white;
+      text-decoration: none;
+      font-size: 1.2em;
+    }
+    .container {
+      padding: 20px;
+      text-align: center;
+      animation: fadeIn 2s;
+    }
+    h1, h2 {
+      color: #28a745;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    textarea, input[type="text"], input[type="password"] {
+      width: 80%;
+      margin-top: 5px;
+      padding: 10px;
+      font-size: 1em;
+      border: 2px solid #28a745;
+      border-radius: 10px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 1.2em;
+      background: #28a745;
+      border: none;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.5s;
+    }
+    button:hover {
+      background: #1e7e34;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 1.2em;
+      color: #333;
+    }
+    .loader {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #28a745;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .page-section {
+      display: none;
+    }
+    .past-visits ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    .past-visits li {
+      margin: 5px 0;
+      background: #e8f5e9;
+      padding: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <div class="logo">Sickbay Assistant</div>
+  <div class="nav-links">
+    <a onclick="showSection('home')">Home</a>
+    <a onclick="showSection('about')">About</a>
+    <a onclick="showSection('login')">Login</a>
+    <a onclick="showSection('register')">Register</a>
+  </div>
+</nav>
+
+<div id="home" class="container page-section" style="display:block;">
+  <h1>Welcome to Sickbay Assistant</h1>
+  <p>We care about your health!</p>
+
+  <label for="symptoms">Enter your symptoms:</label>
+  <textarea id="symptoms" rows="5" placeholder="e.g., headache, fever, cough..."></textarea>
+
+  <button onclick="analyzeSymptoms()">Check Symptoms</button>
+  <div class="loader" id="loader"></div>
+  <div id="result" class="result"></div>
+
+  <div class="past-visits">
+    <h2>Past Visits</h2>
+    <ul id="past-visits-list"></ul>
+    <button onclick="clearPastVisits()">Delete Past Visits</button>
+  </div>
+</div>
+
+<div id="about" class="container page-section">
+  <h2>About Sickbay Assistant</h2>
+  <p>This project was made for <strong>Beacon International School, Peduase, Eastern Region of Ghana</strong>. It helps quickly identify possible illnesses based on symptoms. Always consult a real doctor too!</p>
+</div>
+
+<div id="login" class="container page-section">
+  <h2>Login</h2>
+  <label>Username</label>
+  <input type="text" id="login-username">
+  <label>Password</label>
+  <input type="password" id="login-password">
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="register" class="container page-section">
+  <h2>Register</h2>
+  <label>Username</label>
+  <input type="text" id="register-username">
+  <label>Password</label>
+  <input type="password" id="register-password">
+  <button onclick="register()">Register</button>
+</div>
+
+<script>
+const users = {};
+
+function showSection(section) {
+  document.querySelectorAll('.page-section').forEach(sec => sec.style.display = 'none');
+  document.getElementById(section).style.display = 'block';
+}
+
+const diseases = [
+  { name: "Typhoid", symptoms: ["headache", "abdomen pain", "tiredness", "weakness", "muscle pain", "loss of appetite", "weight loss", "constipation", "diarrhea", "rash", "high fever"] },
+  { name: "Malaria", symptoms: ["fever", "chills", "headache", "nausea", "sweating"] },
+  { name: "Common Cold", symptoms: ["runny nose", "sneezing", "sore throat", "cough"] },
+  { name: "Flu", symptoms: ["fever", "body aches", "fatigue", "cough", "chills"] },
+  { name: "Migraine", symptoms: ["headache", "nausea", "sensitivity to light", "sensitivity to sound"] },
+  { name: "COVID-19", symptoms: ["fever", "dry cough", "fatigue", "loss of taste", "loss of smell"] },
+];
+
+function analyzeSymptoms() {
+  const input = document.getElementById('symptoms').value.toLowerCase();
+  if (!input.trim()) return alert("Please enter symptoms!");
+
+  document.getElementById('loader').style.display = 'block';
+  document.getElementById('result').style.display = 'none';
+
+  setTimeout(() => {
+    document.getElementById('loader').style.display = 'none';
+
+    const inputSymptoms = input.split(/,|\n/).map(s => s.trim());
+    const matches = diseases.map(disease => {
+      let matched = disease.symptoms.filter(symptom => inputSymptoms.includes(symptom)).length;
+      return { name: disease.name, matched, total: disease.symptoms.length };
+    }).filter(d => d.matched > 0);
+
+    matches.sort((a, b) => b.matched/b.total - a.matched/b.total);
+
+    let output = "";
+    if (matches.length > 0) {
+      matches.slice(0,2).forEach(d => {
+        output += `<b>${d.name}</b> — Match: ${Math.round((d.matched / d.total) * 100)}%<br>`;
+      });
+    } else {
+      output = "No matching disease found.";
+    }
+
+    const res = document.getElementById('result');
+    res.innerHTML = output;
+    res.style.display = 'block';
+
+    savePastVisit(input, output);
+    speak(output);
+
+  }, 2000);
+}
+
+function savePastVisit(symptoms, result) {
+  let past = JSON.parse(localStorage.getItem('pastVisits') || "[]");
+  past.push({symptoms, result});
+  localStorage.setItem('pastVisits', JSON.stringify(past));
+  renderPastVisits();
+}
+
+function renderPastVisits() {
+  let list = document.getElementById('past-visits-list');
+  list.innerHTML = "";
+  let past = JSON.parse(localStorage.getItem('pastVisits') || "[]");
+  past.forEach(entry => {
+    let li = document.createElement('li');
+    li.innerHTML = `<strong>Symptoms:</strong> ${entry.symptoms} <br> <strong>Result:</strong> ${entry.result}`;
+    list.appendChild(li);
+  });
+}
+
+function clearPastVisits() {
+  localStorage.removeItem('pastVisits');
+  renderPastVisits();
+}
+
+function speak(text) {
+  const utterance = new SpeechSynthesisUtterance(text.replace(/<[^>]*>?/gm, ''));
+  speechSynthesis.speak(utterance);
+}
+
+function register() {
+  const user = document.getElementById('register-username').value;
+  const pass = document.getElementById('register-password').value;
+  if (user && pass) {
+    users[user] = pass;
+    alert("Registered Successfully!");
+    showSection('login');
+  } else {
+    alert("Please fill all fields");
+  }
+}
+
+function login() {
+  const user = document.getElementById('login-username').value;
+  const pass = document.getElementById('login-password').value;
+  if (users[user] === pass) {
+    alert("Login Successful!");
+    showSection('home');
+  } else {
+    alert("Invalid username or password");
+  }
+}
+
+renderPastVisits();
+</script>
+
+</body>
+</html>
